@@ -14,6 +14,18 @@ FSM:
     Mimic_Gangnam_Style:
       id: 102
       type: Mimic
+    Mimic_LushLife:
+      id: 103
+      type: Mimic
+    Mimic_LongDance:
+      id: 104
+      type: Mimic
+    Mimic_StretchDance:
+      id: 105
+      type: Mimic
+    Mimic_WiggleDance:
+      id: 106
+      type: Mimic
 
   Passive:
     transitions: 
@@ -65,6 +77,10 @@ FSM:
       Passive: LT + B.on_pressed
       Mimic_Dance_102: LT(2s) + down.on_pressed
       Mimic_Gangnam_Style: LT(2s) + left.on_pressed
+      Mimic_LushLife: LT(2s) + right.on_pressed
+      Mimic_LongDance: LT(2s) + A.on_pressed
+      Mimic_StretchDance: LT(2s) + Y.on_pressed
+      Mimic_WiggleDance: RT(2s) + up.on_pressed
 
     policy_dir: config/policy/velocity
     # policy_dir: ../../../logs/rsl_rl/unitree_g1_29dof_velocity
@@ -76,7 +92,7 @@ FSM:
     motion_file: config/policy/mimic/dance_102/params/G1_Take_102.bvh_60hz.csv
     policy_dir: config/policy/mimic/dance_102/
     time_start: 2.8
-    time_end: 24.0
+    time_end: 10.8
   Mimic_Gangnam_Style:
     transitions: 
       Passive: LT + B.on_pressed
@@ -86,4 +102,40 @@ FSM:
     policy_dir: config/policy/mimic/gangnam_style/
     time_start: 5.2
     time_end: 25.5
+  Mimic_LushLife:
+    transitions:
+      Passive: LT + B.on_pressed
+      Velocity: RB + X.on_pressed
+    fps: 60
+    motion_file: config/policy/mimic/lushlife/params/J_Dance12_LushLife.csv
+    policy_dir: config/policy/mimic/lushlife/
+    time_start: 12.1
+    time_end: 18.9
+  Mimic_LongDance:
+    transitions:
+      Passive: LT + B.on_pressed
+      Velocity: RB + X.on_pressed
+    fps: 60
+    motion_file: config/policy/mimic/longdance/params/B_LongDance.csv
+    policy_dir: config/policy/mimic/longdance/
+    time_start: 68.43
+    time_end: 101.00
+  Mimic_StretchDance:
+    transitions:
+      Passive: LT + B.on_pressed
+      Velocity: RB + X.on_pressed
+    fps: 60
+    motion_file: config/policy/mimic/stretchdance/params/B_StretchDance.csv
+    policy_dir: config/policy/mimic/stretchdance/
+    time_start: 14.32
+    time_end: 33.58
+  Mimic_WiggleDance:
+    transitions:
+      Passive: LT + B.on_pressed
+      Velocity: RB + X.on_pressed
+    fps: 60
+    motion_file: config/policy/mimic/wiggledance/params/B_WiggleDance.csv
+    policy_dir: config/policy/mimic/wiggledance/
+    time_start: 10.00
+    time_end: 18.00
 
