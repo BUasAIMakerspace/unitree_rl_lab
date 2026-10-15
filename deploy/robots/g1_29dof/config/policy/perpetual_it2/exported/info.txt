@@ -1,0 +1,1 @@
+The best checkpoint that policy.pt is exported from is model_11200.pt
