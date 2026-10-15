@@ -73,3 +73,8 @@ datasets
 
 # Mimic
 *.npz
+
+# local backups
+*.orig
+*.bak
+*.pre-*
