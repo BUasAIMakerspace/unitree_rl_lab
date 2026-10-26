@@ -6,6 +6,11 @@
 #include "FSMState.h"
 #include "isaaclab/envs/mdp/actions/joint_actions.h"
 #include "isaaclab/envs/mdp/terminations.h"
+#include <atomic>
+#include <chrono>
+#include <vector>
+
+
 
 class State_RLBase : public FSMState
 {
@@ -15,13 +20,22 @@ public:
     void enter()
     {
         // set gain
+        const int n = env->robot->data.joint_stiffness.size();
+        from_q.resize(n); from_kp.resize(n); from_kd.resize(n);
         for (int i = 0; i < env->robot->data.joint_stiffness.size(); ++i)
         {
-            lowcmd->msg_.motor_cmd()[i].kp() = env->robot->data.joint_stiffness[i];
-            lowcmd->msg_.motor_cmd()[i].kd() = env->robot->data.joint_damping[i];
+            from_q[i] = lowcmd->msg_.motor_cmd()[i].q();
+            from_kp[i] = lowcmd->msg_.motor_cmd()[i].kp();
+            from_kd[i] = lowcmd->msg_.motor_cmd()[i].kd();
             lowcmd->msg_.motor_cmd()[i].dq() = 0;
             lowcmd->msg_.motor_cmd()[i].tau() = 0;
+            // lowcmd->msg_.motor_cmd()[i].kp() = env->robot->data.joint_stiffness[i];
+            // lowcmd->msg_.motor_cmd()[i].kd() = env->robot->data.joint_damping[i];
+            // lowcmd->msg_.motor_cmd()[i].dq() = 0;
+            // lowcmd->msg_.motor_cmd()[i].tau() = 0;
         }
+        first_step_done = false;
+        switch_started = false;
 
         env->robot->update();
         // Start policy thread
@@ -38,6 +52,7 @@ public:
             while (policy_thread_running)
             {
                 env->step();
+                first_step_done = true;
 
                 // Sleep
                 std::this_thread::sleep_until(sleepTill);
@@ -61,6 +76,12 @@ private:
 
     std::thread policy_thread;
     bool policy_thread_running = false;
+
+    std::vector<float> from_q, from_kp, from_kd;
+    std::chrono::steady_clock::time_point switch_start;
+    bool switch_started = false;
+    static constexpr double SWITCH_TIME = 0.3;
+    std::atomic<bool> first_step_done{false};
 };
 
 REGISTER_FSM(State_RLBase)

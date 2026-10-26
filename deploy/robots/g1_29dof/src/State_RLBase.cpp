@@ -54,8 +54,51 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
 
 void State_RLBase::run()
 {
-    auto action = env->action_manager->processed_actions();
-    for(int i(0); i < env->robot->data.joint_ids_map.size(); i++) {
-        lowcmd->msg_.motor_cmd()[env->robot->data.joint_ids_map[i]].q() = action[i];
+    auto& cmd = lowcmd->msg_.motor_cmd();
+    if(!first_step_done)
+    {
+        for(
+            size_t i = 0;
+            i < from_q.size();
+            ++i
+        ) {
+            cmd[i].q() = from_q[i];
+            cmd[i].kp() = from_kp[i];
+            cmd[i].kd() = from_kd[i];
+        }
+        return;
     }
+
+    if(!switch_started)
+    {
+        switch_start = std::chrono::steady_clock::now();
+        switch_started = true;
+    }
+
+    const double elaps = std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - switch_start
+    ).count();
+    const float blend = std::min(1.0, elaps/ SWITCH_TIME);
+
+    for(
+        size_t i = 0;
+        i < from_kp.size();
+        ++i
+    ) {
+        cmd[i].kp() = (1 - blend) * from_kp[i] + blend * env->robot->data.joint_stiffness[i];
+        cmd[i].kd() = (1 - blend) * from_kd[i] + blend * env->robot->data.joint_damping[i];
+    }
+    auto action = env->action_manager->processed_actions();
+    for(
+        int i = 0;
+        i < env->robot->data.joint_ids_map.size();
+        i++
+    ) {
+        int m = env->robot->data.joint_ids_map[i];
+        cmd[m].q() = (1 - blend) * from_q[m] + blend * action[i];
+    }
+    // auto action = env->action_manager->processed_actions();
+    // for(int i(0); i < env->robot->data.joint_ids_map.size(); i++) {
+    //     lowcmd->msg_.motor_cmd()[env->robot->data.joint_ids_map[i]].q() = action[i];
+    // }
 }
