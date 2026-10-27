@@ -26,6 +26,9 @@ FSM:
     Mimic_WiggleDance:
       id: 106
       type: Mimic
+    Mimic_Gesture27:
+      id: 107
+      type: Mimic
 
   Passive:
     transitions: 
@@ -81,8 +84,10 @@ FSM:
       Mimic_LongDance: LT(2s) + A.on_pressed
       Mimic_StretchDance: LT(2s) + Y.on_pressed
       Mimic_WiggleDance: RT(2s) + up.on_pressed
+      Mimic_Gesture27: RT(2s) + down.on_pressed
 
-    policy_dir: config/policy/velocity
+    policy_dir: config/policy/velocity/charm_v3
+
     # policy_dir: ../../../logs/rsl_rl/unitree_g1_29dof_velocity
   Mimic_Dance_102:
     transitions: 
@@ -138,4 +143,13 @@ FSM:
     policy_dir: config/policy/mimic/wiggledance/
     time_start: 10.00
     time_end: 18.00
+  Mimic_Gesture27:
+    transitions:
+      Passive: LT + B.on_pressed
+      Velocity: RB + X.on_pressed
+    fps: 60
+    motion_file: config/policy/mimic/gesture27_handshake/params/S4_fsm801_27_shake_hand_rep3.csv
+    policy_dir: config/policy/mimic/gesture27_handshake/
+    time_start: 0.0
+    time_end: 11.80
 
