@@ -34,8 +34,10 @@ public:
             // lowcmd->msg_.motor_cmd()[i].dq() = 0;
             // lowcmd->msg_.motor_cmd()[i].tau() = 0;
         }
+        // Reset the declared booleans.
         first_step_done = false;
         switch_started = false;
+        idle_started = false;
 
         env->robot->update();
         // Start policy thread
@@ -73,15 +75,21 @@ public:
 
 private:
     std::unique_ptr<isaaclab::ManagerBasedRLEnv> env;
-
+    // Declare the policy thread.
     std::thread policy_thread;
     bool policy_thread_running = false;
-
+    // Declare q, kp, and kd variables.
     std::vector<float> from_q, from_kp, from_kd;
+    // Declare the policy switch variables.
     std::chrono::steady_clock::time_point switch_start;
     bool switch_started = false;
     static constexpr double SWITCH_TIME = 0.3;
     std::atomic<bool> first_step_done{false};
+    // Declare velocity idle timer.
+    std::chrono::steady_clock::time_point idle_start;
+    bool idle_started = false;
+    // Declare the idle time.
+    static constexpr double IDLE_TIME = 0.5;
 };
 
 REGISTER_FSM(State_RLBase)

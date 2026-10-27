@@ -32,6 +32,15 @@ public:
                 int fsm_id = FSMStringMap.right.at(target_fsm);
 
                 std::string condition = it->second;
+                if (condition.rfind("key:", 0) == 0)
+                {
+                    std::string wanted = condition.substr(4);
+                    registered_checks.emplace_back(std::make_pair(
+                        [wanted]()->bool{ return keyboard && keyboard->key() == wanted; },
+                        fsm_id
+                    ));
+                    continue;
+                }
                 unitree::common::dsl::Parser p(condition);
                 auto ast = p.Parse();
                 auto func = unitree::common::dsl::Compile(*ast);

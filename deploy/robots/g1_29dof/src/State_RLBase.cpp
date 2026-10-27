@@ -3,6 +3,92 @@
 #include "isaaclab/envs/mdp/observations/observations.h"
 #include "isaaclab/envs/mdp/actions/joint_actions.h"
 #include <unordered_map>
+#include <vector>
+#include <cmath>
+
+static std::vector<float> current_command()
+{
+    // Define each command with their correlated key.
+    static std::unordered_map <std::string, std::vector<float>> key_commands = {
+        // Forward command.
+        {
+            "w",
+            {
+                1.0f,
+                0.0f,
+                0.0f
+            },
+        },
+        // Backward command.
+        {
+            "s",
+            {
+                -1.0f,
+                0.0f,
+                0.0f
+            },
+        },
+        // Left side-step command.
+        {
+            "a",
+            {
+                0.0f,
+                1.0f,
+                0.0f
+            }
+        },
+        // Right side-step command.
+        {
+            "d",
+            {
+                0.0f,
+                -1.0f,
+                0.0f
+            }
+        },
+        // Left turn command.
+        {
+            "q",
+            {
+                0.0f,
+                0.0f,
+                1.0f
+            }
+        },
+        // Right turn command.
+        {
+            "e",
+            {
+                0.0f,
+                0.0f,
+                -1.0f
+            }
+        }
+    };
+    // Return an empty command when no keyboard state is given.
+    if(!FSMState::keyboard)
+    {
+        return{
+            0.0f, 0.0f, 0.0f
+        };
+    }
+    // Collect given key
+    std::string key = FSMState::keyboard->key();
+    // Change the key 
+    auto k_cmd = key_commands.find(key);
+    // If the key is not defined in key commands.
+    if(k_cmd != key_commands.end())
+    {
+        return k_cmd->second;
+    }
+    return {0.0f, 0.0f, 0.0f};
+}
+
+static float command_norm(const std::vector<float>& cmd)
+{
+    float cmd_norm = std::sqrt(cmd[0] * cmd[0] + cmd[1] * cmd[1] + cmd[2] * cmd[2]);
+    return cmd_norm;
+}
 
 namespace isaaclab
 {
@@ -10,24 +96,7 @@ namespace isaaclab
 // change "velocity_commands" observation name in policy deploy.yaml to "keyboard_velocity_commands"
 REGISTER_OBSERVATION(keyboard_velocity_commands)
 {
-    std::string key = FSMState::keyboard->key();
-    static auto cfg = env->cfg["commands"]["base_velocity"]["ranges"];
-
-    static std::unordered_map<std::string, std::vector<float>> key_commands = {
-        {"w", {1.0f, 0.0f, 0.0f}},
-        {"s", {-1.0f, 0.0f, 0.0f}},
-        {"a", {0.0f, 1.0f, 0.0f}},
-        {"d", {0.0f, -1.0f, 0.0f}},
-        {"q", {0.0f, 0.0f, 1.0f}},
-        {"e", {0.0f, 0.0f, -1.0f}}
-    };
-    std::vector<float> cmd = {0.0f, 0.0f, 0.0f};
-    if (key_commands.find(key) != key_commands.end())
-    {
-        // TODO: smooth and limit the velocity commands
-        cmd = key_commands[key];
-    }
-    return cmd;
+    return current_command();
 }
 
 }
@@ -50,6 +119,50 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
             FSMStringMap.right.at("Passive")
         )
     );
+    // Check of current state.
+    if(state_string == "Perpetual")
+    {
+        // Switch to Velocity state when command norm is more than 0.15.
+        this->registered_checks.emplace_back(
+            std::make_pair(
+                [this]()->bool{
+                    float cmd_norm = command_norm(current_command());
+                    return cmd_norm>0.15f;
+                },
+                FSMStringMap.right.at("Velocity")
+            )
+        );
+    }
+    else if(state_string == "Velocity")
+    {
+        // Switch to Perpetual state when command norm is less than 0.15
+        // for longer than defined IDLE_TIME.
+        this->registered_checks.emplace_back(
+            std::make_pair(
+                [this]()->bool{
+                    float cmd_norm = command_norm(current_command());
+                    if(cmd_norm>0.1f)
+                    {
+                        idle_started = false;
+                        return false;
+                    }
+                    else {
+                        if(!idle_started)
+                        {
+                            // Initiate idle_start time.
+                            idle_start = std::chrono::steady_clock::now();
+                            idle_started = true;
+                        }
+                        const double len_quiet = std::chrono::duration<double>(
+                            std::chrono::steady_clock::now() - idle_start
+                        ).count();
+                        return len_quiet >= IDLE_TIME;
+                    }
+                },
+                FSMStringMap.right.at("Perpetual")
+            )
+        );
+    }
 }
 
 void State_RLBase::run()

@@ -20,7 +20,7 @@ FSM:
 
   Passive:
     transitions: 
-      FixStand: LT + up.on_pressed
+      FixStand: "key:1" # LT + up.on_pressed
     mode: [
       1,1,1,1,1,1,
       1,1,1,1,1,1,
@@ -37,8 +37,8 @@ FSM:
     ]
   FixStand:
     transitions: 
-      Passive: LT + B.on_pressed
-      Perpetual: RB + X.on_pressed
+      Passive: "key:0" # LT + B.on_pressed
+      Perpetual: "key:2" # RB + X.on_pressed
       # Velocity: RB + X.on_pressed
     kp: [
       100., 100., 100., 150., 40., 40.,
@@ -66,14 +66,14 @@ FSM:
     ]
   Velocity:
     transitions:
-      Perpetual: RB + A.on_pressed
-      Passive: LT + B.on_pressed
+      Perpetual: "key:0" # RB + A.on_pressed
+      Passive: "key:4" # LT + B.on_pressed
     policy_dir: config/policy/velocity
 
   Perpetual:
     transitions:
-      Velocity: RB + Y.on_pressed
-      Passive: LT + B.on_pressed
+      Velocity: "key:0" # RB + Y.on_pressed
+      Passive: "key:3" # LT + B.on_pressed
     policy_dir: config/policy/perpetual/
 
     # policy_dir: ../../../logs/rsl_rl/unitree_g1_29dof_velocity
