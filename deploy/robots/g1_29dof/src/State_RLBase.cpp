@@ -90,6 +90,24 @@ static float command_norm(const std::vector<float>& cmd)
     return cmd_norm;
 }
 
+static float stick_norm()
+{
+    auto & joy = FSMState::lowstate->joystick;
+    const float x = joy.ly();
+    const float y = joy.lx();
+    const float yaw = joy.rx();
+    return std::sqrt(x * x + y * y + yaw * yaw);
+}
+
+static float command_size()
+{
+    if(FSMState::keyboard)
+    {
+        return command_norm(current_command());
+    }
+    return stick_norm();
+}
+
 namespace isaaclab
 {
 // keyboard velocity commands example
@@ -126,7 +144,7 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
         this->registered_checks.emplace_back(
             std::make_pair(
                 [this]()->bool{
-                    float cmd_norm = command_norm(current_command());
+                    float cmd_norm = command_size();
                     return cmd_norm>0.15f;
                 },
                 FSMStringMap.right.at("Velocity")
@@ -140,7 +158,7 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
         this->registered_checks.emplace_back(
             std::make_pair(
                 [this]()->bool{
-                    float cmd_norm = command_norm(current_command());
+                    float cmd_norm = command_size();
                     if(cmd_norm>0.1f)
                     {
                         idle_started = false;

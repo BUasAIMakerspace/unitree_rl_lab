@@ -3,10 +3,11 @@
 #include "FSM/State_FixStand.h"
 #include "FSM/State_RLBase.h"
 #include "State_Mimic.h"
+#include <cstdlib>
 
 std::unique_ptr<LowCmd_t> FSMState::lowcmd = nullptr;
 std::shared_ptr<LowState_t> FSMState::lowstate = nullptr;
-std::shared_ptr<Keyboard> FSMState::keyboard = std::make_shared<Keyboard>();
+std::shared_ptr<Keyboard> FSMState::keyboard = nullptr;
 
 void init_fsm_state()
 {
@@ -37,6 +38,8 @@ int main(int argc, char** argv)
     unitree::robot::ChannelFactory::Instance()->Init(0, vm["network"].as<std::string>());
 
     init_fsm_state();
+    // Optional keyboard.
+    if (std::getenv("G1_KEYBOARD")) FSMState::keyboard = std::make_shared<Keyboard>();
 
     FSMState::lowcmd->msg_.mode_machine() = 5; // 29dof
     if(!FSMState::lowcmd->check_mode_machine(FSMState::lowstate)) {
