@@ -174,12 +174,7 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
                         const double len_quiet = std::chrono::duration<double>(
                             std::chrono::steady_clock::now() - idle_start
                         ).count();
-                        float max_qd = 0.0f;
-                        for(int i = 0; i < env->robot->data.joint_vel.size(); ++i)
-                        {
-                            max_qd = std::max(max_qd, std::fabs(env->robot->data.joint_vel[i]));
-                        }
-                        return len_quiet >= IDLE_TIME && (max_qd < 0.8f || len_quiet >= 3.0f);
+                        return len_quiet >= IDLE_TIME;
                     }
                 },
                 FSMStringMap.right.at("Perpetual")
