@@ -3,6 +3,7 @@
 #include "FSM/State_FixStand.h"
 #include "FSM/State_RLBase.h"
 #include "State_Mimic.h"
+#include "pad_input.h"
 
 std::unique_ptr<LowCmd_t> FSMState::lowcmd = nullptr;
 std::shared_ptr<LowState_t> FSMState::lowstate = nullptr;
@@ -37,6 +38,47 @@ int main(int argc, char** argv)
     unitree::robot::ChannelFactory::Instance()->Init(0, vm["network"].as<std::string>());
 
     init_fsm_state();
+
+    // Optional laptop pad over UDP (Wi-Fi), merged with the Unitree remote. Off unless --pad-port is given.
+    if(vm["pad-port"].as<int>() > 0)
+    {
+        PadInput::Config pc;
+        pc.port = vm["pad-port"].as<int>();
+        const std::string keyhex = vm["pad-key"].as<std::string>();
+        bool key_ok = keyhex.size() == 16;
+        for(int i = 0; key_ok && i < 8; i++)
+        {
+            unsigned v = 0;
+            key_ok = std::sscanf(keyhex.substr(2 * i, 2).c_str(), "%2x", &v) == 1;
+            pc.key[i] = static_cast<uint8_t>(v);
+        }
+        if(!key_ok)
+        {
+            spdlog::critical("--pad-port needs --pad-key with exactly 16 hex characters.");
+            exit(-1);
+        }
+        const std::string allow = vm["pad-allow-ip"].as<std::string>();
+        if(!allow.empty())
+        {
+            in_addr a;
+            if(inet_pton(AF_INET, allow.c_str(), &a) != 1)
+            {
+                spdlog::critical("--pad-allow-ip: not an IPv4 address.");
+                exit(-1);
+            }
+            pc.allow_ip = a.s_addr;
+        }
+        pc.timeout_s = vm["pad-timeout-ms"].as<int>() / 1000.0;
+        pc.deadman = vm.count("pad-no-deadman") == 0;
+        try {
+            g_pad = std::make_shared<PadInput>(pc);
+        } catch(const std::exception& e) {
+            spdlog::critical("{}", e.what());
+            exit(-1);
+        }
+        spdlog::info("Pad input on UDP {} (allow-ip {}, timeout {} ms, deadman {}). The Unitree remote still works.",
+                     pc.port, allow.empty() ? "any" : allow, vm["pad-timeout-ms"].as<int>(), pc.deadman ? "L1" : "OFF");
+    }
 
     FSMState::lowcmd->msg_.mode_machine() = 5; // 29dof
     if(!FSMState::lowcmd->check_mode_machine(FSMState::lowstate)) {

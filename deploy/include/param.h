@@ -130,6 +130,11 @@ inline po::variables_map helper(int argc, char** argv)
         ("version,v", "show version")
         ("log", "record log file")
         ("network,n", po::value<std::string>()->default_value(""), "dds network interface")
+        ("pad-port", po::value<int>()->default_value(0), "UDP port for the laptop pad, 0 = pad off")
+        ("pad-key", po::value<std::string>()->default_value(""), "16 hex characters, the same as pad_stream.py --key")
+        ("pad-allow-ip", po::value<std::string>()->default_value(""), "only accept the pad from this IP address")
+        ("pad-timeout-ms", po::value<int>()->default_value(250), "pad silence before it counts as gone")
+        ("pad-no-deadman", "pad sticks work without holding L1 (testing only)")
         ;
 
     po::variables_map vm;

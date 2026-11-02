@@ -5,6 +5,7 @@
 #include "FSM/BaseState.h"
 #include "isaaclab/devices/keyboard/keyboard.h"
 #include "unitree_joystick_dsl.hpp"
+#include "pad_input.h"
 
 class FSMState : public BaseState
 {
@@ -55,7 +56,22 @@ public:
 
     void pre_run()
     {
-        lowstate->update();
+        if(g_pad)
+        {
+            // Same work as lowstate->update() for the joystick, but the laptop pad is merged into the
+            // remote's raw bytes first, so on_pressed / pressed_time behave exactly as with the remote.
+            unitree::common::REMOTE_DATA_RX key;
+            {
+                std::lock_guard<std::mutex> lock(lowstate->mutex_);
+                std::memcpy(&key, &lowstate->msg_.wireless_remote()[0], sizeof(key));
+            }
+            g_pad->merge(key);
+            lowstate->joystick.extract(key);
+        }
+        else
+        {
+            lowstate->update();
+        }
         if(keyboard) keyboard->update();
     }
 
