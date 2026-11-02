@@ -130,6 +130,12 @@ REGISTER_OBSERVATION(gait_phase)
     env->global_phase += delta_phase;
     env->global_phase = std::fmod(env->global_phase, 1.0f);
 
+    std::vector<float> cmd = velocity_commands(env, params);
+    if(std::sqrt(cmd[0] * cmd[0] + cmd[1] * cmd[1] + cmd[2] * cmd[2]) < 0.1f)
+    {
+        return {0.0f, 0.0f};
+    }
+    
     std::vector<float> obs(2);
     obs[0] = std::sin(env->global_phase * 2 * M_PI);
     obs[1] = std::cos(env->global_phase * 2 * M_PI);
