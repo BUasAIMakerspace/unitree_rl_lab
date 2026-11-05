@@ -84,30 +84,6 @@ static std::vector<float> current_command()
     return {0.0f, 0.0f, 0.0f};
 }
 
-static float command_norm(const std::vector<float>& cmd)
-{
-    float cmd_norm = std::sqrt(cmd[0] * cmd[0] + cmd[1] * cmd[1] + cmd[2] * cmd[2]);
-    return cmd_norm;
-}
-
-static float stick_norm()
-{
-    auto & joy = FSMState::lowstate->joystick;
-    const float x = joy.ly();
-    const float y = joy.lx();
-    const float yaw = joy.rx();
-    return std::sqrt(x * x + y * y + yaw * yaw);
-}
-
-static float command_size()
-{
-    if(FSMState::keyboard)
-    {
-        return command_norm(current_command());
-    }
-    return stick_norm();
-}
-
 namespace isaaclab
 {
 // keyboard velocity commands example
@@ -137,50 +113,6 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
             FSMStringMap.right.at("Passive")
         )
     );
-    // Check of current state.
-    if(state_string == "Perpetual")
-    {
-        // Switch to Velocity state when command norm is more than 0.15.
-        this->registered_checks.emplace_back(
-            std::make_pair(
-                [this]()->bool{
-                    float cmd_norm = command_size();
-                    return cmd_norm>0.15f;
-                },
-                FSMStringMap.right.at("Velocity")
-            )
-        );
-    }
-    else if(state_string == "Velocity")
-    {
-        // Switch to Perpetual state when command norm is less than 0.15
-        // for longer than defined IDLE_TIME.
-        this->registered_checks.emplace_back(
-            std::make_pair(
-                [this]()->bool{
-                    float cmd_norm = command_size();
-                    if(cmd_norm>0.1f)
-                    {
-                        idle_started = false;
-                        return false;
-                    }
-                    else {
-                        if(!idle_started)
-                        {
-                            // Initiate idle_start time.
-                            idle_start = std::chrono::steady_clock::now();
-                            idle_started = true;
-                        }
-                        const double len_quiet = std::chrono::duration<double>(
-                            std::chrono::steady_clock::now() - idle_start
-                        ).count();
-                        return len_quiet >= IDLE_TIME;
-                    }
-                },
-                FSMStringMap.right.at("Perpetual")
-            )
-        );
-    }
 }
 
 void State_RLBase::run()

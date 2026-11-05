@@ -131,7 +131,12 @@ REGISTER_OBSERVATION(gait_phase)
     env->global_phase = std::fmod(env->global_phase, 1.0f);
 
     std::vector<float> cmd = velocity_commands(env, params);
-    if(std::sqrt(cmd[0] * cmd[0] + cmd[1] * cmd[1] + cmd[2] * cmd[2]) < 0.1f)
+    const bool still = std::sqrt(cmd[0] * cmd[0] + cmd[1] * cmd[1] + cmd[2] * cmd[2]) < 0.1f;
+    env->still_steps = still ? env->still_steps + 1 : 0;
+    env->has_moved = env->has_moved || !still;
+
+    constexpr int delay_steps = 50;
+    if(still && (env->still_steps >= delay_steps || !env->has_moved))
     {
         return {0.0f, 0.0f};
     }

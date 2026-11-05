@@ -37,7 +37,6 @@ public:
         // Reset the declared booleans.
         first_step_done = false;
         switch_started = false;
-        idle_started = false;
 
         env->robot->update();
         // Start policy thread
@@ -85,11 +84,6 @@ private:
     bool switch_started = false;
     static constexpr double SWITCH_TIME = 0.1;
     std::atomic<bool> first_step_done{false};
-    // Declare velocity idle timer.
-    std::chrono::steady_clock::time_point idle_start;
-    bool idle_started = false;
-    // Declare the idle time.
-    static constexpr double IDLE_TIME = 0.5;
 };
 
 REGISTER_FSM(State_RLBase)

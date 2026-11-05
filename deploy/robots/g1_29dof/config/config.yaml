@@ -7,9 +7,6 @@ FSM:
     Velocity:
       id: 3
       type: RLBase
-    Perpetual:
-      id: 4
-      type: RLBase
 
   Passive:
     transitions: 
@@ -31,8 +28,7 @@ FSM:
   FixStand:
     transitions: 
       Passive: LT + B.on_pressed # "key:0"
-      Perpetual: RB + X.on_pressed # "key:2"
-      # Velocity: RB + X.on_pressed
+      Velocity: RB + X.on_pressed # "key:2"
     kp: [
       100., 100., 100., 150., 40., 40.,
       100., 100., 100., 150., 40., 40.,
@@ -59,12 +55,6 @@ FSM:
     ]
   Velocity:
     transitions:
-      Perpetual: RB + A.on_pressed # "key:0"
+      FixStand: RB + A.on_pressed # "key:0"
       Passive: LT + B.on_pressed # "key:4"
     policy_dir: config/policy/velocity
-
-  Perpetual:
-    transitions:
-      Velocity: RB + Y.on_pressed # "key:0"
-      Passive: LT + B.on_pressed # "key:3" 
-    policy_dir: config/policy/perpetual/

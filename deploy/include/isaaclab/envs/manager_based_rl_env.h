@@ -50,6 +50,8 @@ public:
     void reset()
     {
         global_phase = 0;
+        still_steps = 0;
+        has_moved = false;
         episode_length = 0;
         robot->update();
         action_manager->reset();
@@ -75,6 +77,8 @@ public:
     std::unique_ptr<Algorithms> alg;
     long episode_length = 0;
     float global_phase = 0.0f;
+    int still_steps = 0;
+    bool has_moved = false;
 };
 
 };
