@@ -16,6 +16,10 @@ class State_RLBase : public FSMState
 {
 public:
     State_RLBase(int state_mode, std::string state_string);
+
+    // Set velocity state on button press.
+    inline static std::atomic<int> requested_clip{0};
+    inline static std::atomic<bool> recenter_next{false};
     
     void enter()
     {
@@ -37,6 +41,17 @@ public:
         // Reset the declared booleans.
         first_step_done = false;
         switch_started = false;
+        pendig_clip = -1;
+        // Play animation clip.
+        if(is_episodic)
+        {
+            env->clip_index = requested_clip;
+        }
+        // After a clip, keep gait clock for a little bit.
+        else if(recenter_next.exchange(false))
+        {
+            env->hold_clock_steps = RECENTER_STEPS;
+        }
 
         env->robot->update();
         // Start policy thread
@@ -84,6 +99,13 @@ private:
     bool switch_started = false;
     static constexpr double SWITCH_TIME = 0.1;
     std::atomic<bool> first_step_done{false};
+    bool is_episodic = false;
+    int pending_clip = -1;
+    // Set the timeout, delay, and pending data.
+    std::chrono::steady_clock::time_point pending_since;
+    static constexpr int STILL_STEPS = 20;
+    static constexpr double PENDING_TIMEOUT = 3.0;
+    static constexpr int RECENTER_STEPS = 44;
 };
 
 REGISTER_FSM(State_RLBase)

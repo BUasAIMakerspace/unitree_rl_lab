@@ -47,11 +47,20 @@ public:
         observation_manager = std::make_unique<ObservationManager>(cfg["observations"], this);
     }
 
+    static constexpr int GATE_DELAY_STEPS = 20;
     void reset()
     {
         global_phase = 0;
         still_steps = 0;
         has_moved = false;
+        episode_length = 0;
+        if(hold_clock_steps > 0)
+        {
+            has_moved = true;
+            still_steps = GATE_DELAY_STEPS - hold_clock_steps - 2;
+            hold_clock_steps = 0;
+        }
+        cancel_time = -1.0f;
         episode_length = 0;
         robot->update();
         action_manager->reset();
@@ -79,6 +88,13 @@ public:
     float global_phase = 0.0f;
     int still_steps = 0;
     bool has_moved = false;
+    int hold_clock_steps = 1;
+    int clip_index = 0;
+    float cancel_time = -1.0f;
+
+    float clip_time() const {
+        return std::max<long>(episode_length - 1, 0) * step_dt;
+    }
 };
 
 };

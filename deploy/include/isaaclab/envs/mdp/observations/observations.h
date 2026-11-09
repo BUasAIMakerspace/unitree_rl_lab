@@ -135,8 +135,17 @@ REGISTER_OBSERVATION(gait_phase)
     env->still_steps = still ? env->still_steps + 1 : 0;
     env->has_moved = env->has_moved || !still;
 
-    constexpr int delay_steps = 50;
-    if(still && (env->still_steps >= delay_steps || !env->has_moved))
+    constexpr int delay_steps = 25;
+    const bool holding = env->hold_steps_left > 0;
+    if(holding)
+    {
+        --env->hold_steps_left;
+        if(env->hold_steps_left == 0)
+        {
+            env->still_steps = delay_steps;
+        }
+    }
+    if(!holding && still && (env->still_steps >= delay_steps || !env->has_moved))
     {
         return {0.0f, 0.0f};
     }
@@ -145,6 +154,47 @@ REGISTER_OBSERVATION(gait_phase)
     obs[0] = std::sin(env->global_phase * 2 * M_PI);
     obs[1] = std::cos(env->global_phase * 2 * M_PI);
     return obs;
+}
+
+inline float episodic_end(ManagerBasedRLEnv* env)
+{
+    const float dur = env->cfg["episodic"]["clip_durations"][env->clip_index].as<float>();
+    if(env->cancel_time >= 0.0f)
+    {
+        return std::min(env->cancel_time, dur);
+    } 
+    else
+    {
+        return dur;
+    }
+}
+
+REGISTER_OBSERVATION(clip_phase)
+{
+    const float dur = env->cfg["episodic"]["clip_durations"][env->clip_index].as<float>();
+    const float t = std::min(
+        env->clip_time(),
+        episodic_end(env)
+    );
+    return {std::min(t / dur, 1.0f)};
+}
+
+REGISTER_OBSERVATION(clip_selection)
+{
+    std::vector<float> obs(
+        env->cfg["episodic"]["num_clips"].as<int>(),
+        0.0f
+    );
+    obs[env->clip_index] = 1.0f;
+    return obs;
+}
+
+REGISTER_OBSERVATION(ease_out_phase)
+{
+    const float ease_out_time = env->cfg["episodic"]["ease_out_time"].as<float>();
+    const float tail = ease_out_time + env->cfg["episodic"]["hold_time"].as<float>();
+    const float after = (env->clip_time() - episodic_end(env)) / std::max(tail, 1e-6f);
+    return {std::clamp(after, 0.0f, 1.0f)};
 }
 
 }
