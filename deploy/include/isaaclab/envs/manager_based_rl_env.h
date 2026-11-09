@@ -10,6 +10,7 @@
 #include "isaaclab/assets/articulation/articulation.h"
 #include "isaaclab/algorithms/algorithms.h"
 #include <iostream>
+#include <algorithm>
 #include "isaaclab/utils/utils.h"
 
 namespace isaaclab
@@ -48,18 +49,16 @@ public:
     }
 
     static constexpr int GATE_DELAY_STEPS = 20;
+    int hold_clock_steps = 0;
+    int hold_steps_left = 0;
     void reset()
     {
         global_phase = 0;
         still_steps = 0;
         has_moved = false;
         episode_length = 0;
-        if(hold_clock_steps > 0)
-        {
-            has_moved = true;
-            still_steps = GATE_DELAY_STEPS - hold_clock_steps - 2;
-            hold_clock_steps = 0;
-        }
+        hold_steps_left = hold_clock_steps > 0 ? hold_clock_steps + 1 : 0;
+        hold_clock_steps = 0;
         cancel_time = -1.0f;
         episode_length = 0;
         robot->update();
@@ -88,7 +87,6 @@ public:
     float global_phase = 0.0f;
     int still_steps = 0;
     bool has_moved = false;
-    int hold_clock_steps = 1;
     int clip_index = 0;
     float cancel_time = -1.0f;
 

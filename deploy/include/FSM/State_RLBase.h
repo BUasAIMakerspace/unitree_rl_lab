@@ -41,7 +41,7 @@ public:
         // Reset the declared booleans.
         first_step_done = false;
         switch_started = false;
-        pendig_clip = -1;
+        pending_clip = -1;
         // Play animation clip.
         if(is_episodic)
         {
