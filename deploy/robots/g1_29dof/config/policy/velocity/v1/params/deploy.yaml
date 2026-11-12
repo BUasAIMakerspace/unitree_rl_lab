@@ -126,8 +126,8 @@ commands:
       - -0.5
       - 1.0
       lin_vel_y:
-      - -0.2
-      - 0.2
+      - -0.3
+      - 0.3
       ang_vel_z:
       - -0.5
       - 0.5
@@ -206,7 +206,7 @@ observations:
     - 0.2
     - 0.2
     - 0.2
-    history_length: 1
+    history_length: 5
   projected_gravity:
     params: {}
     clip: null
@@ -214,7 +214,7 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   joint_pos_rel:
     params: {}
     clip: null
@@ -248,7 +248,7 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   joint_vel_rel:
     params: {}
     clip: null
@@ -282,7 +282,7 @@ observations:
     - 0.05
     - 0.05
     - 0.05
-    history_length: 1
+    history_length: 5
   last_action:
     params: {}
     clip: null
@@ -316,7 +316,7 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   velocity_commands:
     params:
       command_name: base_velocity
@@ -325,7 +325,7 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   gait_phase:
     params:
       period: 0.8
@@ -333,4 +333,4 @@ observations:
     scale:
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
