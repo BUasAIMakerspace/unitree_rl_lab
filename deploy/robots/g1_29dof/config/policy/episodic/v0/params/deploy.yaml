@@ -194,7 +194,7 @@ observations:
     - 0.2
     - 0.2
     - 0.2
-    history_length: 1
+    history_length: 5
   projected_gravity:
     params: {}
     clip: null
@@ -202,7 +202,7 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   joint_pos_rel:
     params: {}
     clip: null
@@ -236,7 +236,7 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   joint_vel_rel:
     params: {}
     clip: null
@@ -270,7 +270,7 @@ observations:
     - 0.05
     - 0.05
     - 0.05
-    history_length: 1
+    history_length: 5
   last_action:
     params: {}
     clip: null
@@ -304,13 +304,13 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   clip_phase:
     params: {}
     clip: null
     scale:
     - 1.0
-    history_length: 1
+    history_length: 5
   clip_selection:
     params: {}
     clip: null
@@ -319,13 +319,13 @@ observations:
     - 1.0
     - 1.0
     - 1.0
-    history_length: 1
+    history_length: 5
   ease_out_phase:
     params: {}
     clip: null
     scale:
     - 1.0
-    history_length: 1
+    history_length: 5
 episodic:
   num_clips: 4
   clip_names:
