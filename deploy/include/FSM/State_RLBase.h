@@ -97,7 +97,7 @@ private:
     // Declare the policy switch variables.
     std::chrono::steady_clock::time_point switch_start;
     bool switch_started = false;
-    static constexpr double SWITCH_TIME = 0.1;
+    static constexpr double SWITCH_TIME = 0.0;
     std::atomic<bool> first_step_done{false};
     bool is_episodic = false;
     int pending_clip = -1;
