@@ -100,6 +100,15 @@ REGISTER_OBSERVATION(keyboard_velocity_commands)
 // Reference pose observation registration.
 REGISTER_OBSERVATION(reference_pose)
 {
+    // Ensure data exist when being read.
+    if(g_refclips.empty()
+       || env->clip_index < 0
+       || env->clip_index >= (int)g_refclips.size()
+       || g_refclips[env->clip_index].empty())
+    {
+        return std::vector<float>(env->robot->data.joint_pos.size(), 0.0f);
+    }
+
     // Clip duration selection.
     const auto episodic = env->cfg["episodic"];
     const float dur = episodic["clip_durations"][env->clip_index].as<float>();
@@ -168,7 +177,7 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
         {
             if(g_refclips[i].empty())
             {
-                spdlog::critical("There are no frames for this clip.", i);
+                spdlog::critical("There are no frames for this clip {}.", i);
                 std::exit(-1);
             }
         }
