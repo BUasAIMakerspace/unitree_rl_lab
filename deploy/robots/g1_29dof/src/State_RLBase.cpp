@@ -5,7 +5,11 @@
 #include <unordered_map>
 #include <vector>
 #include <cmath>
+#include <algorithm>
+#include <filesystem>
 
+static std::vector<std::vector<std::vector<float>>> g_refclips;
+static float g_reffps = 30.f;
 static std::vector<float> current_command()
 {
     // Define each command with their correlated key.
@@ -93,6 +97,42 @@ REGISTER_OBSERVATION(keyboard_velocity_commands)
     return current_command();
 }
 
+// Reference pose observation registration.
+REGISTER_OBSERVATION(reference_pose)
+{
+    // Clip duration selection.
+    const auto episodic = env->cfg["episodic"];
+    const float dur = episodic["clip_durations"][env->clip_index].as<float>();
+    float end = dur;
+    // Define ending time and ease-out time.
+    if(env->cancel_time >= 0.0f) end = std::min(env->cancel_time, dur);
+    const float ease_out_time = episodic["ease_out_time"].as<float>();
+    const float ease_in_time = episodic["ease_in_time"]
+    ? episodic["ease_in_time"].as<float>() : 1.0f;
+    const float t = env->clip_time();
+    // Collect the clip.
+    const auto & clip = g_refclips[env->clip_index];
+    const int last = (int)clip.size() - 1;
+    const float pos = std::min(std::min(t, end) * g_reffps, (float)last);
+    const int lo = (int)pos;
+    const int hi = std::min(lo + 1, last);
+    const float f = pos - lo;
+    // Clamp ease-in and ease-out.
+    const float ease_in  = std::clamp(t / ease_in_time, 0.0f, 1.0f);
+    const float ease_out = std::clamp(1.0f - (t - end) / ease_out_time, 0.0f, 1.0f);
+
+    const auto & q = env->robot->data.joint_pos;
+    const auto & d = env->robot->data.default_joint_pos;
+    std::vector<float> out(q.size());
+    for(size_t j = 0; j < out.size(); ++j)
+    {
+        float ref = clip[lo][j] * (1.0f - f) + clip[hi][j] * f;
+        ref = d[j] + ease_in * ease_out * (ref - d[j]);
+        out[j] = ref - q[j];
+    }
+    return out;
+}
+
 }
 
 State_RLBase::State_RLBase(int state_mode, std::string state_string)
@@ -116,6 +156,23 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
     is_episodic = env->cfg["episodic"].IsDefined();
     if(is_episodic)
     {
+        const in n_clips = env->cfg["episodic"]["num_clips"].as<int>();
+        auto csv = isaaclab::load_csv((policy_dir / "params" / "reference_clips.csv").string());
+        g_refclips.assign(n_clips, {});
+        for(auto & row:csv)
+        {
+            const int clip_i = (int)std::lround(row[0]);
+            g_refclips[clip_i].emplace_back(row.begin() + 1, row.end());
+        }
+        for(int i = 0; i < n_clips; ++i)
+        {
+            if(g_ref_clips[i].empty())
+            {
+                spdlog::critical("There are no frames for this clip.", i);
+                std::exit(-1);
+            }
+        }
+
         // Switch back to Velocity policy.
         this->registered_checks.emplace_back(
             std::make_pair(
