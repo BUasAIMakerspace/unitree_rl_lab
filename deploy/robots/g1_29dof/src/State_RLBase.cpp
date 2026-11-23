@@ -156,7 +156,7 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
     is_episodic = env->cfg["episodic"].IsDefined();
     if(is_episodic)
     {
-        const in n_clips = env->cfg["episodic"]["num_clips"].as<int>();
+        const int n_clips = env->cfg["episodic"]["num_clips"].as<int>();
         auto csv = isaaclab::load_csv((policy_dir / "params" / "reference_clips.csv").string());
         g_refclips.assign(n_clips, {});
         for(auto & row:csv)
@@ -166,7 +166,7 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
         }
         for(int i = 0; i < n_clips; ++i)
         {
-            if(g_ref_clips[i].empty())
+            if(g_refclips[i].empty())
             {
                 spdlog::critical("There are no frames for this clip.", i);
                 std::exit(-1);
